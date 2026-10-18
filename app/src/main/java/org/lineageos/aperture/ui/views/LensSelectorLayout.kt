@@ -10,6 +10,7 @@ import android.icu.text.DecimalFormat
 import android.icu.text.DecimalFormatSymbols
 import android.util.AttributeSet
 import android.view.LayoutInflater
+import android.view.animation.OvershootInterpolator
 import android.widget.Button
 import androidx.appcompat.widget.LinearLayoutCompat
 import androidx.core.view.children
@@ -117,8 +118,8 @@ class LensSelectorLayout @JvmOverloads constructor(
     private fun inflateButton(): Button {
         val button = layoutInflater.inflate(R.layout.lens_selector_button, this, false) as Button
         return button.apply {
-            layoutParams = LayoutParams(32.px, 32.px).apply {
-                setMargins(5)
+            layoutParams = LayoutParams(40.px, 40.px).apply {
+                setMargins(6)
             }
         }
     }
@@ -162,6 +163,15 @@ class LensSelectorLayout @JvmOverloads constructor(
             formattedZoomRatio
         }
         button.rotation = screenRotation.compensationValue.toFloat()
+
+        // M3E: Spring scale animation for active lens button
+        val targetScale = if (currentCamera) 1.15f else 1.0f
+        button.animate()
+            .scaleX(targetScale)
+            .scaleY(targetScale)
+            .setDuration(280)
+            .setInterpolator(OvershootInterpolator(1.8f))
+            .start()
     }
 
     private fun formatZoomRatio(zoomRatio: Float): String =

@@ -68,11 +68,13 @@ import org.lineageos.aperture.ext.nextPowerOfTwo
 import org.lineageos.aperture.ext.previous
 import org.lineageos.aperture.ext.previousPowerOfTwo
 import org.lineageos.aperture.ext.thermalStatusFlow
+import org.lineageos.aperture.models.ASPECT_RATIO_1_1
 import org.lineageos.aperture.models.Camera
 import org.lineageos.aperture.models.CameraConfiguration
 import org.lineageos.aperture.models.CameraFacing
 import org.lineageos.aperture.models.CameraMode
 import org.lineageos.aperture.models.CameraState
+import org.lineageos.aperture.models.PhotoFilter
 import org.lineageos.aperture.models.ColorCorrectionAberrationMode
 import org.lineageos.aperture.models.DistortionCorrectionMode
 import org.lineageos.aperture.models.EdgeMode
@@ -180,6 +182,22 @@ class CameraViewModel(application: Application) : ApertureViewModel(application)
      * Whether the current session is in single capture mode.
      */
     val inSingleCaptureMode = MutableStateFlow(false)
+
+    /**
+     * Whether auto smile capture is enabled.
+     */
+    val smileCaptureEnabled = MutableStateFlow(false)
+
+    fun toggleSmileCapture() {
+        smileCaptureEnabled.value = !smileCaptureEnabled.value
+    }
+
+    val currentFilter = MutableStateFlow(PhotoFilter.NONE)
+
+    fun cycleFilter() {
+        val values = PhotoFilter.entries
+        currentFilter.value = values[(values.indexOf(currentFilter.value) + 1) % values.size]
+    }
 
     private val _cameraConfiguration = MutableStateFlow<CameraConfiguration?>(null)
     val cameraConfiguration = _cameraConfiguration
@@ -1155,6 +1173,53 @@ class CameraViewModel(application: Application) : ApertureViewModel(application)
         }
     }
 
+    fun takeVideoSnapshot() {
+        if (!cameraState.value.isRecordingVideo) return
+
+        val outputOptions = StorageUtils.getPhotoMediaStoreOutputOptions(
+            applicationContext.contentResolver,
+            ImageCapture.Metadata().apply {
+                location = this@CameraViewModel.location.value
+                if (cameraFacing.value == CameraFacing.FRONT) {
+                    isReversedHorizontal = preferencesRepository.photoFfcMirror.value
+                }
+            },
+            "image/jpeg",
+            System.currentTimeMillis(),
+            null,
+        )
+
+        cameraController.takePicture(
+            outputOptions,
+            ContextCompat.getMainExecutor(applicationContext),
+            object : ImageCapture.OnImageSavedCallback {
+                override fun onCaptureStarted() {
+                    cameraSoundsUtils.playShutterClick()
+                }
+
+                override fun onImageSaved(output: ImageCapture.OutputFileResults) {
+                    output.savedUri?.let { mediaRepository.broadcastNewPicture(it) }
+                    emitEvent(Event.PhotoCaptureStatus.ImageSaved(output, null))
+                }
+
+                override fun onError(exc: ImageCaptureException) {
+                    Log.e(LOG_TAG, "Video snapshot failed", exc)
+                }
+            }
+        )
+    }
+
+    fun takePhotoBurst(count: Int = 3) {
+        if (cameraState.value != CameraState.IDLE) return
+
+        viewModelScope.launch {
+            repeat(count) {
+                takePhoto()
+                delay(600L)
+            }
+        }
+    }
+
     fun captureVideo() {
         if (cameraState.value != CameraState.IDLE) {
             if (cameraController.isRecording) {
@@ -1407,14 +1472,31 @@ class CameraViewModel(application: Application) : ApertureViewModel(application)
         updateConfiguration<CameraConfiguration.Photo> { cameraConfiguration ->
             val newAspectRatio = when (cameraConfiguration.photoAspectRatio) {
                 AspectRatio.RATIO_4_3 -> AspectRatio.RATIO_16_9
-                AspectRatio.RATIO_16_9 -> AspectRatio.RATIO_4_3
+                AspectRatio.RATIO_16_9 -> ASPECT_RATIO_1_1
                 else -> AspectRatio.RATIO_4_3
             }
 
-            preferencesRepository.photoAspectRatio.value = newAspectRatio
+            if (newAspectRatio != ASPECT_RATIO_1_1) {
+                preferencesRepository.photoAspectRatio.value = newAspectRatio
+            }
 
             cameraConfiguration.copy(
                 photoAspectRatio = newAspectRatio,
+            )
+        }
+
+    /**
+     * Cycle the long exposure (slow shutter) time.
+     */
+    fun cycleLongExposure() =
+        updateConfiguration<CameraConfiguration.Photo> { cameraConfiguration ->
+            val exposureTimes = listOf(null, 250_000_000L, 500_000_000L, 1_000_000_000L, 2_000_000_000L)
+            val currentIdx = exposureTimes.indexOf(cameraConfiguration.camera2Options.sensorExposureTime)
+            val nextExposure = exposureTimes[(currentIdx + 1) % exposureTimes.size]
+            cameraConfiguration.copy(
+                camera2Options = cameraConfiguration.camera2Options.copy(
+                    sensorExposureTime = nextExposure
+                )
             )
         }
 

@@ -31,6 +31,7 @@ sealed interface CameraConfiguration {
         val colorCorrectionAberrationMode: ColorCorrectionAberrationMode?,
         val distortionCorrectionMode: DistortionCorrectionMode?,
         val hotPixelMode: HotPixelMode?,
+        val sensorExposureTime: Long? = null,
     ) {
         companion object {
             /**
@@ -43,6 +44,7 @@ sealed interface CameraConfiguration {
                 colorCorrectionAberrationMode = null,
                 distortionCorrectionMode = null,
                 hotPixelMode = null,
+                sensorExposureTime = null,
             )
         }
     }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-FileCopyrightText: LunarisAOSP
      SPDX-License-Identifier: Apache-2.0
 -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -10,13 +10,15 @@
     android:layout_height="match_parent"
     android:padding="16dp">
 
+    <!-- M3E: Pill-shaped sliding highlight indicator -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/cameraModeHighlightButton"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="36dp"
         android:backgroundTint="?attr/colorSecondaryContainer"
         android:enabled="false"
         android:padding="0dp"
+        app:cornerRadius="18dp"
         app:iconPadding="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -34,15 +36,17 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- M3E: Recording duration pill -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/videoDurationButton"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="36dp"
         android:backgroundTint="@color/rec_red"
         android:enabled="false"
         android:padding="0dp"
         android:textColor="@android:color/white"
         android:visibility="gone"
+        app:cornerRadius="18dp"
         app:iconPadding="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

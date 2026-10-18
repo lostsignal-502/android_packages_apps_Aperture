@@ -4,6 +4,7 @@
      SPDX-License-Identifier: Apache-2.0
 -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
-    <item android:color="@color/dark_grey" android:state_enabled="true" />
+    <!-- M3E: inactive = 70% white on dark bar, active = full white on pill -->
+    <item android:color="#B3FFFFFF" android:state_enabled="true" />
     <item android:color="@android:color/white" android:state_enabled="false" />
 </selector>

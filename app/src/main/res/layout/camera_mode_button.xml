@@ -1,16 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-FileCopyrightText: LunarisAOSP
      SPDX-License-Identifier: Apache-2.0
 -->
+<!-- M3E: Mode selector button — pill style, no monospace -->
 <com.google.android.material.button.MaterialButton xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
+    android:layout_height="36dp"
     android:backgroundTint="@android:color/transparent"
-    android:padding="0dp"
+    android:letterSpacing="0.04"
+    android:paddingHorizontal="20dp"
     android:textAllCaps="true"
     android:textColor="@color/camera_mode_selector_text"
+    android:textSize="13sp"
     android:textStyle="bold"
-    android:typeface="monospace"
+    app:cornerRadius="18dp"
     app:iconPadding="0dp" />

@@ -73,6 +73,7 @@ import coil3.request.error
 import coil3.request.fallback
 import coil3.size.Scale
 import coil3.video.VideoFrameDecoder
+import com.google.android.material.color.DynamicColors
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -92,6 +93,7 @@ import org.lineageos.aperture.ext.setEdgeMode
 import org.lineageos.aperture.ext.setFrameRate
 import org.lineageos.aperture.ext.setHotPixelMode
 import org.lineageos.aperture.ext.setNoiseReductionMode
+import org.lineageos.aperture.ext.setSensorExposureTime
 import org.lineageos.aperture.ext.setPadding
 import org.lineageos.aperture.ext.setShadingMode
 import org.lineageos.aperture.ext.setVideoStabilizationMode
@@ -100,6 +102,7 @@ import org.lineageos.aperture.ext.slideDown
 import org.lineageos.aperture.ext.smoothRotate
 import org.lineageos.aperture.ext.transform
 import org.lineageos.aperture.ext.updateBarsVisibility
+import org.lineageos.aperture.models.ASPECT_RATIO_1_1
 import org.lineageos.aperture.models.AssistantIntent
 import org.lineageos.aperture.models.CameraConfiguration
 import org.lineageos.aperture.models.CameraFacing
@@ -113,6 +116,7 @@ import org.lineageos.aperture.models.HardwareKey
 import org.lineageos.aperture.models.MediaType
 import org.lineageos.aperture.models.Permission
 import org.lineageos.aperture.models.PermissionState
+import org.lineageos.aperture.models.PhotoFilter
 import org.lineageos.aperture.models.PhotoOutputFormat
 import org.lineageos.aperture.models.Rotation
 import org.lineageos.aperture.models.ThermalStatus
@@ -131,7 +135,9 @@ import org.lineageos.aperture.ui.views.IslandView
 import org.lineageos.aperture.ui.views.LensSelectorLayout
 import org.lineageos.aperture.ui.views.LevelerView
 import org.lineageos.aperture.ui.views.PreviewBlurView
+import org.lineageos.aperture.ui.views.SquareCropOverlayView
 import org.lineageos.aperture.ui.views.VerticalSlider
+import org.lineageos.aperture.analyzer.SmileCaptureAnalyzer
 import org.lineageos.aperture.utils.ExifUtils
 import org.lineageos.aperture.utils.GoogleLensUtils
 import org.lineageos.aperture.utils.PermissionsManager
@@ -180,7 +186,12 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
     private val videoFrameRateButton by lazy { findViewById<Button>(R.id.videoFrameRateButton) }
     private val videoQualityButton by lazy { findViewById<Button>(R.id.videoQualityButton) }
     private val videoRecordingStateButton by lazy { findViewById<ImageButton>(R.id.videoRecordingStateButton) }
+    private val videoSnapshotButton by lazy { findViewById<ImageButton>(R.id.videoSnapshotButton) }
     private val videoDynamicRangeButton by lazy { findViewById<Button>(R.id.videoDynamicRangeButton) }
+    private val squareCropOverlayView by lazy { findViewById<SquareCropOverlayView>(R.id.squareCropOverlayView) }
+    private val smileCaptureButton by lazy { findViewById<Button>(R.id.smileCaptureButton) }
+    private val longExposureButton by lazy { findViewById<Button>(R.id.longExposureButton) }
+    private val filterButton by lazy { findViewById<Button>(R.id.filterButton) }
     private val viewFinder by lazy { findViewById<PreviewView>(R.id.viewFinder) }
     private val viewFinderFocus by lazy { findViewById<ImageView>(R.id.viewFinderFocus) }
     private val zoomLevel by lazy { findViewById<HorizontalSlider>(R.id.zoomLevel) }
@@ -252,6 +263,20 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         }
     }
     private var zoomGestureDetectorIsInProgress = false
+
+    private val smileCaptureAnalyzer by lazy {
+        SmileCaptureAnalyzer {
+            runOnUiThread {
+                if (viewModel.smileCaptureEnabled.value
+                    && viewModel.cameraMode.value == CameraMode.PHOTO
+                    && viewModel.cameraState.value == CameraState.IDLE
+                ) {
+                    startShutterAnimation(ShutterAnimation.PhotoCapture)
+                    viewModel.takePhoto()
+                }
+            }
+        }
+    }
 
     private val handler = object : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
@@ -365,6 +390,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
     @Suppress("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        DynamicColors.applyToActivityIfAvailable(this)
 
         // Enable edge-to-edge
         enableEdgeToEdge()
@@ -431,6 +457,9 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
         // Set secondary top bar button callbacks
         aspectRatioButton.setOnClickListener { viewModel.cyclePhotoAspectRatio() }
+        smileCaptureButton.setOnClickListener { viewModel.toggleSmileCapture() }
+        longExposureButton.setOnClickListener { viewModel.cycleLongExposure() }
+        filterButton.setOnClickListener { viewModel.cycleFilter() }
         videoQualityButton.setOnClickListener { viewModel.cycleVideoQuality() }
         videoFrameRateButton.setOnClickListener { viewModel.cycleVideoFrameRate() }
         videoDynamicRangeButton.setOnClickListener { viewModel.cycleVideoDynamicRange() }
@@ -511,6 +540,8 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
         // Set primary bar button callbacks
         flipCameraButton.setOnClickListener { viewModel.flipCamera() }
 
+        videoSnapshotButton.setOnClickListener { viewModel.takeVideoSnapshot() }
+
         videoRecordingStateButton.setOnClickListener {
             viewModel.onVideoRecordingStateButtonPress()
         }
@@ -539,6 +570,18 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                     CameraMode.VIDEO -> viewModel.captureVideo()
                     else -> {}
                 }
+            }
+        }
+
+        shutterButton.setOnLongClickListener {
+            if (viewModel.cameraMode.value == CameraMode.PHOTO
+                && viewModel.cameraState.value == CameraState.IDLE
+            ) {
+                startShutterAnimation(ShutterAnimation.PhotoCapture)
+                viewModel.takePhotoBurst()
+                true
+            } else {
+                false
             }
         }
 
@@ -682,6 +725,11 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                         }
 
                         is Event.PhotoCaptureStatus.ImageSaved -> {
+                            event.output.savedUri?.let { uri ->
+                                lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                                    applyFilterToPhoto(uri, viewModel.currentFilter.value)
+                                }
+                            }
                             if (!viewModel.inSingleCaptureMode.value) {
                                 onCapturedMedia(event.output.savedUri)
                             } else {
@@ -719,6 +767,9 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
                 // Update secondary top bar buttons
                 aspectRatioButton.isVisible = cameraMode != CameraMode.VIDEO
+                smileCaptureButton.isVisible = cameraMode == CameraMode.PHOTO
+                longExposureButton.isVisible = cameraMode == CameraMode.PHOTO
+                filterButton.isVisible = cameraMode == CameraMode.PHOTO
                 videoQualityButton.isVisible = cameraMode == CameraMode.VIDEO
                 videoFrameRateButton.isVisible = cameraMode == CameraMode.VIDEO
                 videoDynamicRangeButton.isVisible = cameraMode == CameraMode.VIDEO
@@ -872,11 +923,16 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                 aspectRatioButton.isEnabled = cameraState == CameraState.IDLE
                 effectButton.isEnabled = cameraState == CameraState.IDLE
                 settingsButton.isEnabled = cameraState == CameraState.IDLE
+                smileCaptureButton.isEnabled = cameraState == CameraState.IDLE
+                longExposureButton.isEnabled = cameraState == CameraState.IDLE
+                filterButton.isEnabled = cameraState == CameraState.IDLE
 
                 lensSelectorLayout.setCameraState(cameraState)
 
                 // Update primary bar buttons
                 galleryButtonCardView.isEnabled = cameraState == CameraState.IDLE
+                galleryButtonCardView.isInvisible = cameraState.isRecordingVideo
+                videoSnapshotButton.isVisible = cameraState.isRecordingVideo
                 // Shutter button must stay enabled
                 flipCameraButton.isEnabled = cameraState == CameraState.IDLE
                 videoRecordingStateButton.isVisible = cameraState.isRecordingVideo
@@ -930,6 +986,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
 
                 // Rotate primary bar buttons
                 galleryButtonCardView.smoothRotate(compensationValue)
+                videoSnapshotButton.smoothRotate(compensationValue)
                 shutterButton.smoothRotate(compensationValue)
                 flipCameraButton.smoothRotate(compensationValue)
 
@@ -1160,9 +1217,12 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                     when (photoAspectRatio) {
                         AspectRatio.RATIO_4_3 -> R.string.aspect_ratio_4_3
                         AspectRatio.RATIO_16_9 -> R.string.aspect_ratio_16_9
+                        ASPECT_RATIO_1_1 -> R.string.aspect_ratio_1_1
                         else -> throw Exception("Unknown aspect ratio $photoAspectRatio")
                     }
                 )
+                squareCropOverlayView.isVisible =
+                    photoAspectRatio == ASPECT_RATIO_1_1
             }
         }
 
@@ -1379,6 +1439,58 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                 islandView.setItems(islandItems)
             }
         }
+
+        launch {
+            viewModel.smileCaptureEnabled.collectLatest { enabled ->
+                smileCaptureButton.setText(
+                    if (enabled) R.string.smile_capture_on else R.string.smile_capture_off
+                )
+                if (viewModel.cameraMode.value == CameraMode.PHOTO) {
+                    if (enabled) {
+                        viewModel.cameraController.setImageAnalysisAnalyzer(
+                            viewModel.cameraExecutor, smileCaptureAnalyzer
+                        )
+                        viewModel.cameraController.setEnabledUseCases(
+                            CameraController.IMAGE_CAPTURE or CameraController.IMAGE_ANALYSIS
+                        )
+                    } else {
+                        viewModel.cameraController.clearImageAnalysisAnalyzer()
+                        viewModel.cameraController.setEnabledUseCases(CameraController.IMAGE_CAPTURE)
+                    }
+                }
+            }
+        }
+
+        launch {
+            viewModel.cameraConfiguration.collectLatest { config ->
+                if (config is CameraConfiguration.Photo) {
+                    longExposureButton.setText(
+                        when (config.camera2Options.sensorExposureTime) {
+                            null -> R.string.long_exposure_off
+                            250_000_000L -> R.string.long_exposure_quarter
+                            500_000_000L -> R.string.long_exposure_half
+                            1_000_000_000L -> R.string.long_exposure_1s
+                            else -> R.string.long_exposure_2s
+                        }
+                    )
+                }
+            }
+        }
+
+        launch {
+            viewModel.currentFilter.collectLatest { filter ->
+                filterButton.setText(filter.labelResId)
+                filterButton.isSelected = filter != PhotoFilter.NONE
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    viewFinder.setRenderEffect(
+                        if (filter == PhotoFilter.NONE) null
+                        else android.graphics.RenderEffect.createColorFilterEffect(
+                            android.graphics.ColorMatrixColorFilter(filter.colorMatrix)
+                        )
+                    )
+                }
+            }
+        }
     }
 
     private suspend fun queueSetupWithCameraPermissions() {
@@ -1519,11 +1631,18 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                     PhotoOutputFormat.RAW_JPEG -> ImageCapture.OUTPUT_FORMAT_RAW_JPEG
                 }
 
+                val captureAspectRatio =
+                    if (cameraConfiguration.photoAspectRatio == ASPECT_RATIO_1_1) {
+                        AspectRatio.RATIO_4_3
+                    } else {
+                        cameraConfiguration.photoAspectRatio
+                    }
+
                 viewModel.cameraController.imageCaptureResolutionSelector =
                     ResolutionSelector.Builder()
                         .setAspectRatioStrategy(
                             AspectRatioStrategy(
-                                cameraConfiguration.photoAspectRatio,
+                                captureAspectRatio,
                                 AspectRatioStrategy.FALLBACK_RULE_AUTO,
                             )
                         )
@@ -1536,7 +1655,15 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                         )
                         .build()
 
-                CameraController.IMAGE_CAPTURE
+                if (viewModel.smileCaptureEnabled.value) {
+                    viewModel.cameraController.setImageAnalysisAnalyzer(
+                        viewModel.cameraExecutor, smileCaptureAnalyzer
+                    )
+                    CameraController.IMAGE_CAPTURE or CameraController.IMAGE_ANALYSIS
+                } else {
+                    viewModel.cameraController.clearImageAnalysisAnalyzer()
+                    CameraController.IMAGE_CAPTURE
+                }
             }
 
             is CameraConfiguration.Video -> {
@@ -1651,6 +1778,7 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                 .setColorCorrectionAberrationMode(camera2Options.colorCorrectionAberrationMode)
                 .setDistortionCorrectionMode(camera2Options.distortionCorrectionMode)
                 .setHotPixelMode(camera2Options.hotPixelMode)
+                .setSensorExposureTime(camera2Options.sensorExposureTime)
                 .build()
             )
         }
@@ -2063,6 +2191,29 @@ open class CameraActivity : AppCompatActivity(R.layout.activity_camera) {
                 // Do nothing
                 true
             }
+        }
+    }
+
+    private fun applyFilterToPhoto(uri: Uri, filter: PhotoFilter) {
+        if (filter == PhotoFilter.NONE || Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        try {
+            val bitmap = contentResolver.openInputStream(uri)?.use {
+                android.graphics.BitmapFactory.decodeStream(it)
+            } ?: return
+            val paint = android.graphics.Paint().apply {
+                colorFilter = android.graphics.ColorMatrixColorFilter(filter.colorMatrix)
+            }
+            val filtered = android.graphics.Bitmap.createBitmap(
+                bitmap.width, bitmap.height, bitmap.config ?: android.graphics.Bitmap.Config.ARGB_8888
+            )
+            android.graphics.Canvas(filtered).drawBitmap(bitmap, 0f, 0f, paint)
+            contentResolver.openOutputStream(uri, "rwt")?.use { out ->
+                filtered.compress(android.graphics.Bitmap.CompressFormat.JPEG, 95, out)
+            }
+            bitmap.recycle()
+            filtered.recycle()
+        } catch (e: Exception) {
+            android.util.Log.e("CameraActivity", "Failed to apply filter", e)
         }
     }
 

@@ -142,3 +142,16 @@ fun CaptureRequestOptions.Builder.setHotPixelMode(
         null -> null
     }
 )
+
+@androidx.camera.camera2.interop.ExperimentalCamera2Interop
+fun CaptureRequestOptions.Builder.setSensorExposureTime(
+    sensorExposureTimeNs: Long?
+) = if (sensorExposureTimeNs != null) {
+    setCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_MODE_OFF)
+        .setCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME, sensorExposureTimeNs)
+        .setCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY, 400)
+} else {
+    clearCaptureRequestOption(CaptureRequest.CONTROL_AE_MODE)
+        .clearCaptureRequestOption(CaptureRequest.SENSOR_EXPOSURE_TIME)
+        .clearCaptureRequestOption(CaptureRequest.SENSOR_SENSITIVITY)
+}

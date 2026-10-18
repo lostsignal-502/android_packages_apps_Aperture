@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-FileCopyrightText: LunarisAOSP
      SPDX-License-Identifier: Apache-2.0
 -->
 <resources xmlns:tools="http://schemas.android.com/tools">
@@ -21,35 +21,38 @@
         <item name="enableEdgeToEdge">true</item>
     </style>
 
-    <!-- Secondary bar icons base theme -->
+    <!-- M3E: Secondary bar base style -->
     <style name="Theme.Aperture.Camera.SecondaryBarButton">
         <item name="tint">@color/secondary_bar_button_icon</item>
-        <item name="backgroundTint">?attr/colorOnPrimary</item>
+        <item name="backgroundTint">@android:color/transparent</item>
         <item name="drawableTint">@color/secondary_bar_button_icon</item>
         <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
         <item name="android:textColor">@color/secondary_bar_button_icon</item>
-        <item name="android:textSize">12sp</item>
+        <item name="android:textSize">11sp</item>
     </style>
 
-    <!-- Secondary top bar icons theme -->
+    <!-- M3E: Secondary top bar icons -->
     <style name="Theme.Aperture.Camera.SecondaryTopBarButton" parent="Theme.Aperture.Camera.SecondaryBarButton">
-        <item name="android:layout_width">96dp</item>
+        <item name="android:layout_width">84dp</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:hyphenationFrequency">normal</item>
-        <item name="android:maxLines">3</item>
-        <item name="android:paddingHorizontal">0dp</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:paddingHorizontal">4dp</item>
+        <item name="android:paddingVertical">10dp</item>
         <item name="android:textStyle">bold</item>
-        <item name="android:typeface">monospace</item>
+        <item name="android:background">@drawable/top_bar_button_background</item>
+        <item name="android:stateListAnimator">@animator/squish</item>
     </style>
 
-    <!-- Secondary bottom bar icons theme -->
+    <!-- M3E: Secondary bottom bar icons -->
     <style name="Theme.Aperture.Camera.SecondaryBottomBarButton" parent="Theme.Aperture.Camera.SecondaryBarButton">
-        <item name="android:layout_width">48dp</item>
-        <item name="android:layout_height">48dp</item>
-        <item name="android:padding">4dp</item>
+        <item name="android:layout_width">52dp</item>
+        <item name="android:layout_height">52dp</item>
+        <item name="android:padding">8dp</item>
+        <item name="android:stateListAnimator">@animator/squish</item>
     </style>
 
-    <!-- Info chip -->
+    <!-- M3E: Island chip image view -->
     <style name="Theme.Aperture.Camera.Island.ImageView" parent="">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>

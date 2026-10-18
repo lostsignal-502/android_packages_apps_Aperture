@@ -13,7 +13,10 @@
     <string name="confirm_button_description">Confirm</string>
     <string name="flash_button_description">Flash mode</string>
     <string name="flip_camera_button_description">Flip camera</string>
+    <string name="video_snapshot_button_description">Take photo</string>
     <string name="gallery_button_description">Gallery</string>
+    <string name="smile_capture_on">SMILE ON</string>
+    <string name="smile_capture_off">SMILE</string>
     <string name="google_lens_button_description">Open Google Lens</string>
     <string name="image_view_description">Image preview</string>
     <string name="pro_button_description">Pro settings</string>
@@ -27,6 +30,20 @@
 
     <string name="aspect_ratio_4_3" translatable="false">4:3</string>
     <string name="aspect_ratio_16_9" translatable="false">16:9</string>
+    <string name="aspect_ratio_1_1" translatable="false">1:1</string>
+
+    <string name="long_exposure_off">SLOW OFF</string>
+    <string name="long_exposure_quarter" translatable="false">1/4s</string>
+    <string name="long_exposure_half" translatable="false">1/2s</string>
+    <string name="long_exposure_1s" translatable="false">1s</string>
+    <string name="long_exposure_2s" translatable="false">2s</string>
+
+    <string name="filter_none">FILTER</string>
+    <string name="filter_vivid">VIVID</string>
+    <string name="filter_noir">NOIR</string>
+    <string name="filter_warm">WARM</string>
+    <string name="filter_cool">COOL</string>
+    <string name="filter_bw">B&amp;W</string>
 
     <string name="video_quality_sd" translatable="false">480p</string>
     <string name="video_quality_hd" translatable="false">720p</string>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-     SPDX-FileCopyrightText: The LineageOS Project
+     SPDX-FileCopyrightText: LunarisAOSP
      SPDX-License-Identifier: Apache-2.0
 -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
@@ -56,6 +56,17 @@
         app:layout_constraintStart_toStartOf="@+id/viewFinder"
         app:layout_constraintTop_toTopOf="@+id/viewFinder" />
 
+    <!-- MotCam: 1:1 square crop overlay — dark bars shown when aspect ratio is 1:1 -->
+    <org.lineageos.aperture.ui.views.SquareCropOverlayView
+        android:id="@+id/squareCropOverlayView"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="@+id/viewFinder"
+        app:layout_constraintEnd_toEndOf="@+id/viewFinder"
+        app:layout_constraintStart_toStartOf="@+id/viewFinder"
+        app:layout_constraintTop_toTopOf="@+id/viewFinder" />
+
     <org.lineageos.aperture.ui.views.LevelerView
         android:id="@+id/levelerView"
         android:layout_width="0dp"
@@ -89,10 +100,10 @@
 
     <org.lineageos.aperture.ui.views.HorizontalSlider
         android:id="@+id/zoomLevel"
-        android:layout_width="250dp"
-        android:layout_height="32dp"
+        android:layout_width="260dp"
+        android:layout_height="36dp"
         android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="@+id/viewFinder"
+        app:layout_constraintBottom_toTopOf="@+id/secondaryBottomBarLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:thumbColor="@android:color/white"
@@ -118,11 +129,12 @@
         app:trackColorGradientEnd="#242424"
         app:trackColorGradientStart="#8d9299" />
 
+    <!-- M3E: Top bar — chip-style pill container -->
     <HorizontalScrollView
         android:id="@+id/secondaryTopBarLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="#99000000"
+        android:background="@color/m3e_chip_surface"
         android:fillViewport="true"
         android:scrollbars="none"
         android:visibility="gone"
@@ -134,11 +146,11 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="top|center"
-            android:paddingVertical="8dp">
+            android:paddingVertical="4dp">
 
             <!-- Cannot mess with fixed padding from here because of insets -->
             <Space
-                android:layout_width="16dp"
+                android:layout_width="12dp"
                 android:layout_height="match_parent" />
 
             <!-- Photo mode specific settings -->
@@ -153,6 +165,27 @@
                 style="@style/Theme.Aperture.Camera.SecondaryTopBarButton"
                 android:drawableTop="@drawable/ic_blur_off"
                 android:text="@string/effect_none" />
+
+            <!-- MotCam: Auto smile capture toggle -->
+            <Button
+                android:id="@+id/smileCaptureButton"
+                style="@style/Theme.Aperture.Camera.SecondaryTopBarButton"
+                android:drawableTop="@drawable/ic_smile"
+                android:text="@string/smile_capture_off" />
+
+            <!-- MotCam: Long / slow shutter exposure -->
+            <Button
+                android:id="@+id/longExposureButton"
+                style="@style/Theme.Aperture.Camera.SecondaryTopBarButton"
+                android:drawableTop="@drawable/ic_shutter_speed"
+                android:text="@string/long_exposure_off" />
+
+            <!-- M3E: Color filter toggle -->
+            <Button
+                android:id="@+id/filterButton"
+                style="@style/Theme.Aperture.Camera.SecondaryTopBarButton"
+                android:drawableTop="@drawable/ic_filter"
+                android:text="@string/filter_none" />
 
             <!-- Video mode specific settings -->
             <Button
@@ -200,34 +233,32 @@
 
             <!-- Cannot mess with fixed padding from here because of insets -->
             <Space
-                android:layout_width="16dp"
+                android:layout_width="12dp"
                 android:layout_height="match_parent" />
 
         </LinearLayout>
 
     </HorizontalScrollView>
 
+    <!-- M3E: Secondary bottom bar — rounded top, glassmorphic bottom sheet -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/secondaryBottomBarLayout"
         android:layout_width="0dp"
-        android:layout_height="72dp"
+        android:layout_height="88dp"
+        android:background="@drawable/bottom_bar_background"
+        android:paddingHorizontal="8dp"
         app:layout_constraintBottom_toTopOf="@+id/primaryBarLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
-        <com.google.android.material.divider.MaterialDivider
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
-
         <ImageButton
             android:id="@+id/proButton"
             style="@style/Theme.Aperture.Camera.SecondaryBottomBarButton"
-            android:layout_marginStart="40dp"
+            android:layout_marginStart="44dp"
+            android:background="@drawable/flip_camera_button_background"
             android:contentDescription="@string/pro_button_description"
             android:scaleType="fitXY"
+            android:stateListAnimator="@animator/squish"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent"
@@ -236,9 +267,11 @@
         <ImageButton
             android:id="@+id/googleLensButton"
             style="@style/Theme.Aperture.Camera.SecondaryBottomBarButton"
-            android:layout_marginStart="40dp"
+            android:layout_marginStart="44dp"
+            android:background="@drawable/flip_camera_button_background"
             android:contentDescription="@string/google_lens_button_description"
             android:src="@drawable/ic_google_lens"
+            android:stateListAnimator="@animator/squish"
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -258,45 +291,71 @@
         <ImageButton
             android:id="@+id/flashButton"
             style="@style/Theme.Aperture.Camera.SecondaryBottomBarButton"
-            android:layout_marginEnd="40dp"
+            android:layout_marginEnd="44dp"
+            android:background="@drawable/flip_camera_button_background"
             android:contentDescription="@string/flash_button_description"
+            android:stateListAnimator="@animator/squish"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/ic_flash_off" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <!-- M3E: Primary bar — shutter, gallery, flip -->
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/primaryBarLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:paddingTop="16dp"
+        android:background="@color/m3e_bottom_bar"
+        android:paddingTop="20dp"
+        android:paddingBottom="12dp"
         app:layout_constraintBottom_toTopOf="@+id/cameraModeSelectorLayout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
+        <!-- M3E: Shutter button — 80dp for more presence -->
         <ImageButton
             android:id="@+id/shutterButton"
-            android:layout_width="75dp"
-            android:layout_height="75dp"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
             android:background="@null"
             android:contentDescription="@string/shutter_button_description"
             android:soundEffectsEnabled="false"
             android:src="@drawable/avd_photo_capture"
+            android:stateListAnimator="@animator/squish"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
 
+        <!-- MotCam: Video snapshot — appears in place of gallery during recording -->
+        <ImageButton
+            android:id="@+id/videoSnapshotButton"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:layout_marginStart="36dp"
+            android:background="@drawable/flip_camera_button_background"
+            android:contentDescription="@string/video_snapshot_button_description"
+            android:scaleType="center"
+            android:src="@drawable/ic_camera_snapshot"
+            android:stateListAnimator="@animator/squish"
+            android:visibility="gone"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <!-- M3E: Gallery — rounded card with 12dp corners -->
         <androidx.cardview.widget.CardView
             android:id="@+id/galleryButtonCardView"
             android:layout_width="60dp"
             android:layout_height="60dp"
             android:layout_gravity="center"
-            android:layout_marginStart="32dp"
+            android:layout_marginStart="36dp"
             android:backgroundTint="?colorSecondaryContainer"
             android:scaleType="fitXY"
-            app:cardCornerRadius="8dp"
+            android:stateListAnimator="@animator/squish"
+            app:cardCornerRadius="12dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
@@ -326,15 +385,17 @@
 
         </androidx.cardview.widget.CardView>
 
+        <!-- M3E: Flip camera — circular semi-transparent background -->
         <ImageButton
             android:id="@+id/flipCameraButton"
             android:layout_width="60dp"
             android:layout_height="60dp"
-            android:layout_marginEnd="32dp"
-            android:background="@null"
+            android:layout_marginEnd="36dp"
+            android:background="@drawable/flip_camera_button_background"
             android:contentDescription="@string/flip_camera_button_description"
             android:scaleType="center"
             android:src="@drawable/ic_flip_camera"
+            android:stateListAnimator="@animator/squish"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -346,17 +407,22 @@
             android:background="@null"
             android:contentDescription="@string/video_recording_state_button_description"
             android:src="@drawable/avd_video_recording_pause"
+            android:stateListAnimator="@animator/squish"
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="@+id/flipCameraButton"
             app:layout_constraintStart_toStartOf="@+id/flipCameraButton"
             app:layout_constraintTop_toTopOf="parent" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
+    <!-- M3E: Mode selector — pill-based, spring animated -->
     <org.lineageos.aperture.ui.views.CameraModeSelectorLayout
         android:id="@+id/cameraModeSelectorLayout"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:background="@color/m3e_bottom_bar"
+        android:paddingBottom="4dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

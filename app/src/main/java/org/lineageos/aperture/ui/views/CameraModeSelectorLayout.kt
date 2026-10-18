@@ -9,6 +9,7 @@ import android.animation.ValueAnimator
 import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
+import android.view.animation.OvershootInterpolator
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.core.view.doOnLayout
@@ -71,21 +72,26 @@ class CameraModeSelectorLayout @JvmOverloads constructor(
             it.value.isEnabled = cameraMode != it.key
         }
 
-        // Animate camera mode change
+        // M3E: Animate mode change with spring-like overshoot
         doOnLayout {
-            // Animate position
+            val overshootPosition = OvershootInterpolator(1.6f)
+            val overshootSize = OvershootInterpolator(1.2f)
+
             ValueAnimator.ofFloat(
                 cameraModeHighlightButton.x, currentCameraModeButton.x + 16.px
             ).apply {
+                duration = 380
+                interpolator = overshootPosition
                 addUpdateListener { valueAnimator ->
                     cameraModeHighlightButton.x = valueAnimator.animatedValue as Float
                 }
             }.start()
 
-            // Animate width
             ValueAnimator.ofInt(
                 cameraModeHighlightButton.width, currentCameraModeButton.width
             ).apply {
+                duration = 380
+                interpolator = overshootSize
                 addUpdateListener { valueAnimator ->
                     cameraModeHighlightButton.width = valueAnimator.animatedValue as Int
                 }
